@@ -7,11 +7,12 @@ type bag struct {
 	data map[string]interface{}
 }
 
-func (b *bag) get(key string) interface{} {
+func (b *bag) get(key string) (interface{}, bool) {
 	b.Lock()
 	defer b.Unlock()
 
-	return b.data[key]
+	val, ok := b.data[key]
+	return val, ok
 }
 
 func (b *bag) set(key string, value interface{}) {
@@ -34,14 +35,13 @@ func (b *bag) remove(key string) {
 func (b *bag) absorb(other *bag) {
 	b.Lock()
 	other.Lock()
-	defer func(b1, b2 *bag) {
-		b1.Unlock()
-		b2.Unlock()
-	}(b, other)
 
 	for k, v := range other.data {
 		if b.data[k] == nil && v != nil {
 			b.data[k] = v
 		}
 	}
+
+	other.Unlock()
+	b.Unlock()
 }

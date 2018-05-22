@@ -3,16 +3,17 @@ package taskgraph
 import "sync"
 
 type TaskGroup struct {
-	tasks    []Task
-	bag      *bag
-	Policies GroupPolicy
-	Next     *TaskGroup
+	tasks []Task
+	bag   *bag
+	Next  *TaskGroup
 }
 
+// Add a Task to this group
 func (t *TaskGroup) Add(task Task) {
 	t.tasks = append(t.tasks, task)
 }
 
+// Exec will run the task group
 func (t *TaskGroup) Exec() error {
 	numTasks := len(t.tasks)
 	errchan := make(chan error)
@@ -43,11 +44,9 @@ func (t *TaskGroup) Exec() error {
 		case <-donechan:
 			pops++
 		case err := <-errchan:
-			if containsPolicy(t.Policies, HaltOnAnyError) {
-				firstErrorToken.Do(func() {
-					errorOut = err
-				})
-			}
+			firstErrorToken.Do(func() {
+				errorOut = err
+			})
 		}
 	}
 
@@ -70,10 +69,17 @@ func (t *TaskGroup) execWithBag(b *bag) error {
 	return t.Exec()
 }
 
-func (t *TaskGroup) Get(key string) interface{} {
-	return t.bag.get(key)
+// Get the item identified by key, or a default value if the item doesn't exist
+func (t *TaskGroup) Get(key string, dflt interface{}) interface{} {
+	val, ok := t.bag.get(key)
+	if !ok || val == nil {
+		return dflt
+	}
+
+	return val
 }
 
+// Set the item by key
 func (t *TaskGroup) Set(key string, value interface{}) {
 	t.ensureBag()
 	// don't allow nils in the map
@@ -82,4 +88,9 @@ func (t *TaskGroup) Set(key string, value interface{}) {
 	} else {
 		t.bag.set(key, value)
 	}
+}
+
+// Unset an item by key
+func (t *TaskGroup) Unset(key string) {
+	t.Set(key, nil)
 }
