@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 	"time"
-	)
+)
 
 var testMutex sync.RWMutex
 var testBytes []byte
