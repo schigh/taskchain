@@ -12,10 +12,10 @@ import (
 	"strings"
 )
 
-var test_mutex sync.RWMutex
-var test_bytes []byte
-var test_buffer = bytes.NewBuffer(test_bytes)
-var test_logger = log.New(test_buffer, "", 0)
+var testMutex sync.RWMutex
+var testBytes []byte
+var testBuffer = bytes.NewBuffer(testBytes)
+var testLogger = log.New(testBuffer, "", 0)
 
 func passTask(t *TaskGroup) error {
 	fmt.Println("this task will succeed")
@@ -28,16 +28,16 @@ func failTask(t *TaskGroup) error {
 }
 
 func bagAddTask(t *TaskGroup) error {
-	test_mutex.Lock()
+	testMutex.Lock()
 	a := t.Get("football", 0).(int)
 	a++
 	t.Set("football", a)
-	test_mutex.Unlock()
+	testMutex.Unlock()
 	return nil
 }
 
 func errHandler(t *TaskGroup, err error) {
-	test_logger.Print("*")
+	testLogger.Print("*")
 }
 
 func TestTaskGroup_Add(t *testing.T) {
@@ -395,7 +395,7 @@ func TestTaskGroup_errHandler(t *testing.T) {
 
 	t1.Exec()
 	time.Sleep(10 * time.Millisecond)
-	buffout := strings.TrimSpace(test_buffer.String())
+	buffout := strings.TrimSpace(testBuffer.String())
 	fmt.Println(buffout)
 	if buffout != failMsg {
 		t.Fail()
