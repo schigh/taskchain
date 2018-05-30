@@ -1,4 +1,4 @@
-# taskgraph
+# taskchain
 
 Simple barrier logic for asynchronous non-cancellable tasks.
 
