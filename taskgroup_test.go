@@ -1,4 +1,4 @@
-package taskgraph
+package taskchain
 
 import (
 	"bytes"
