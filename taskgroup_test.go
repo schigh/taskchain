@@ -9,8 +9,7 @@ import (
 	"sync"
 	"testing"
 	"time"
-	"strings"
-)
+	)
 
 var testMutex sync.RWMutex
 var testBytes []byte
@@ -37,7 +36,11 @@ func bagAddTask(t *TaskGroup) error {
 }
 
 func errHandler(t *TaskGroup, err error) {
-	testLogger.Print("*")
+	testMutex.Lock()
+	a := t.Get("football", 0).(int)
+	a++
+	t.Set("football", a)
+	testMutex.Unlock()
 }
 
 func TestTaskGroup_Add(t *testing.T) {
@@ -381,13 +384,6 @@ func TestTaskGroup_ensureBag(t *testing.T) {
 }
 
 func TestTaskGroup_errHandler(t *testing.T) {
-	failMsg := strings.TrimSpace(`
-*
-*
-*
-*
-*
-`)
 	t1 := &TaskGroup{
 		tasks: []Task{failTask, failTask, failTask, failTask, failTask},
 	}
@@ -395,9 +391,8 @@ func TestTaskGroup_errHandler(t *testing.T) {
 
 	t1.Exec()
 	time.Sleep(10 * time.Millisecond)
-	buffout := strings.TrimSpace(testBuffer.String())
-	fmt.Println(buffout)
-	if buffout != failMsg {
+	a := t1.Get("football", 0).(int)
+	if a != 5 {
 		t.Fail()
 	}
 }
