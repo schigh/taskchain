@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"sync"
 	"testing"
 	"time"
+	"strings"
 )
 
 var test_mutex sync.RWMutex
 var test_bytes []byte
 var test_buffer = bytes.NewBuffer(test_bytes)
+var test_logger = log.New(test_buffer, "", 0)
 
 func passTask(t *TaskGroup) error {
 	fmt.Println("this task will succeed")
@@ -34,7 +37,7 @@ func bagAddTask(t *TaskGroup) error {
 }
 
 func errHandler(t *TaskGroup, err error) {
-	fmt.Fprint(test_buffer, "*")
+	test_logger.Print("*")
 }
 
 func TestTaskGroup_Add(t *testing.T) {
@@ -378,14 +381,23 @@ func TestTaskGroup_ensureBag(t *testing.T) {
 }
 
 func TestTaskGroup_errHandler(t *testing.T) {
+	failMsg := strings.TrimSpace(`
+*
+*
+*
+*
+*
+`)
 	t1 := &TaskGroup{
 		tasks: []Task{failTask, failTask, failTask, failTask, failTask},
 	}
 	t1.ErrorHandler = errHandler
 
 	t1.Exec()
-	time.Sleep(1 * time.Millisecond)
-	if test_buffer.String() != "*****" {
+	time.Sleep(10 * time.Millisecond)
+	buffout := strings.TrimSpace(test_buffer.String())
+	fmt.Println(buffout)
+	if buffout != failMsg {
 		t.Fail()
 	}
 }
