@@ -4,17 +4,15 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"sync"
 	"testing"
 	"time"
 )
 
-var mx sync.RWMutex
-var buff []byte
-var b = bytes.NewBuffer(buff)
-var testlg = log.New(b, "", 0)
+var test_mutex sync.RWMutex
+var test_bytes []byte
+var test_buffer = bytes.NewBuffer(test_bytes)
 
 func passTask(t *TaskGroup) error {
 	fmt.Println("this task will succeed")
@@ -27,16 +25,16 @@ func failTask(t *TaskGroup) error {
 }
 
 func bagAddTask(t *TaskGroup) error {
-	mx.Lock()
+	test_mutex.Lock()
 	a := t.Get("football", 0).(int)
 	a++
 	t.Set("football", a)
-	mx.Unlock()
+	test_mutex.Unlock()
 	return nil
 }
 
 func errHandler(t *TaskGroup, err error) {
-	fmt.Fprint(b, "*")
+	fmt.Fprint(test_buffer, "*")
 }
 
 func TestTaskGroup_Add(t *testing.T) {
@@ -387,7 +385,7 @@ func TestTaskGroup_errHandler(t *testing.T) {
 
 	t1.Exec()
 	time.Sleep(1 * time.Millisecond)
-	if b.String() != "*****" {
+	if test_buffer.String() != "*****" {
 		t.Fail()
 	}
 }
