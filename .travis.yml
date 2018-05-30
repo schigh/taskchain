@@ -1,2 +1,4 @@
 language: go
-go: 1.10
+
+go:
+  - "1.10.x"
