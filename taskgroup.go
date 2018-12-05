@@ -5,7 +5,7 @@ import "sync"
 // TaskGroup is a grouping of Tasks that will be dispatched
 // asynchronously
 type TaskGroup struct {
-	sync.Mutex
+	sync.RWMutex
 
 	// Next is the task group that is to be executed after all
 	// tasks within the current task group are completed
@@ -79,8 +79,6 @@ func (t *TaskGroup) Exec() error {
 
 // Get the item identified by key, or a default value if the item doesn't exist
 func (t *TaskGroup) Get(key string, dflt interface{}) interface{} {
-	t.Lock()
-	defer t.Unlock()
 	t.ensureBag()
 	val, ok := t.bag.get(key)
 	if !ok || val == nil {
@@ -92,7 +90,6 @@ func (t *TaskGroup) Get(key string, dflt interface{}) interface{} {
 
 // Set the item by key
 func (t *TaskGroup) Set(key string, value interface{}) {
-	t.Lock()
 	t.ensureBag()
 	// don't allow nils in the map
 	if value == nil {
@@ -100,7 +97,6 @@ func (t *TaskGroup) Set(key string, value interface{}) {
 	} else {
 		t.bag.set(key, value)
 	}
-	t.Unlock()
 }
 
 // Unset an item by key
@@ -109,6 +105,22 @@ func (t *TaskGroup) Unset(key string) {
 }
 
 func (t *TaskGroup) ensureBag() {
+	if t.isBagNil() {
+		t.makeBag()
+	}
+}
+
+func (t *TaskGroup) isBagNil() bool {
+	t.RLock()
+	defer t.RUnlock()
+
+	return t.bag == nil
+}
+
+func (t *TaskGroup) makeBag() {
+	t.Lock()
+	defer t.Unlock()
+
 	if t.bag == nil {
 		t.bag = &bag{data: make(map[string]interface{})}
 	}
