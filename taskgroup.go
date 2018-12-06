@@ -77,6 +77,9 @@ func (t *TaskGroup) Exec() error {
 		if t.Next.ErrorHandler == nil {
 			t.Next.ErrorHandler = t.ErrorHandler
 		}
+		if t.Next.PanicHandler == nil {
+			t.Next.PanicHandler = t.PanicHandler
+		}
 		t.ensureBag()
 		errorOut = t.Next.execWithBag(t.bag)
 	}
