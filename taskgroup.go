@@ -1,6 +1,9 @@
 package taskchain
 
-import "sync"
+import (
+	"runtime"
+	"sync"
+)
 
 // TaskGroup is a grouping of Tasks that will be dispatched
 // asynchronously
@@ -14,6 +17,9 @@ type TaskGroup struct {
 	// ErrorHandler will handle all errors returned within this
 	// task group
 	ErrorHandler func(*TaskGroup, error)
+
+	// PanicHandler will be called in case of a panic
+	PanicHandler func(err interface{}, stacktrace []byte) error
 
 	tasks []Task
 	bag   *bag
@@ -38,7 +44,7 @@ func (t *TaskGroup) Exec() error {
 
 	for _, td := range t.tasks {
 		go func(task Task, grErrChan chan error, grDoneChan chan struct{}) {
-			err := task(t)
+			err := t.runTask(task)
 			if err != nil {
 				grErrChan <- err
 			}
@@ -64,6 +70,7 @@ func (t *TaskGroup) Exec() error {
 				go t.ErrorHandler(t, err)
 			}
 		}
+
 	}
 
 	if errorOut == nil && t.Next != nil {
@@ -75,6 +82,21 @@ func (t *TaskGroup) Exec() error {
 	}
 
 	return errorOut
+}
+
+func (t *TaskGroup) runTask(task Task) (result error) {
+	if t.PanicHandler != nil {
+		defer func() {
+			if p := recover(); p != nil {
+				buf := make([]byte, 1<<10)
+				stackLen := runtime.Stack(buf, true)
+				result = t.PanicHandler(p, buf[:stackLen])
+			}
+		}()
+	}
+
+	result = task(t)
+	return
 }
 
 // Get the item identified by key, or a default value if the item doesn't exist
