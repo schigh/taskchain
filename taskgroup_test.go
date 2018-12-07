@@ -26,6 +26,11 @@ func failTask(t *TaskGroup) error {
 	return errors.New("fail")
 }
 
+func panicTask(t *TaskGroup) error {
+	fmt.Println("this task will panic")
+	panic("no soup for you")
+}
+
 func bagAddTask(t *TaskGroup) error {
 	testMutex.Lock()
 	a := t.Get("football", 0).(int)
@@ -83,6 +88,43 @@ func TestTaskGroup_Add(t *testing.T) {
 				t.Errorf("Task.Add() got = %v, want %v", tt.t.tasks, tt.expected)
 			}
 		})
+	}
+}
+
+func TestTaskGroup_Panic(t *testing.T) {
+	expected := errors.New("Turn a panic into an error")
+	group := &TaskGroup{}
+	group.Add(panicTask)
+
+	group.PanicHandler = func(_ interface{}, _ []byte) error {
+		return expected
+	}
+	result := group.Exec()
+
+	if result != expected {
+		t.Fail()
+	}
+}
+
+func TestTaskGroup_PanicChaining(t *testing.T) {
+	expected := errors.New("Turn a panic into an error")
+
+	panicGroup := &TaskGroup{}
+	panicGroup.Add(panicTask)
+
+	passGroup := &TaskGroup{
+		Next: panicGroup,
+	}
+	passGroup.Add(passTask)
+
+	passGroup.PanicHandler = func(_ interface{}, _ []byte) error {
+		return expected
+	}
+
+	result := passGroup.Exec()
+
+	if result != expected {
+		t.Fail()
 	}
 }
 
