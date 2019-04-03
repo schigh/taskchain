@@ -1,3 +1,8 @@
+# Deprecated
+Don't use this.  Use `golang.org/x/sync/errgroup` instead.
+
+----
+
 [![LICENSE](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 [![Build Status](https://travis-ci.org/schigh/taskchain.svg?branch=master)](https://travis-ci.org/schigh/taskchain)
 [![codecov](https://codecov.io/gh/schigh/taskchain/branch/master/graph/badge.svg?token=hhqA1l88kx)](https://codecov.io/gh/schigh/taskchain)
